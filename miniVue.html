@@ -2,10 +2,6 @@
 <div id="app"></div>
 <script>
 
-    function add(data){
-        count +=1
-
-    }
     function reactive(target){
         const deps = {}
         const handler ={
@@ -33,10 +29,15 @@
         return{
             mount(selector){
                 const el = document.querySelector(selector)
+                const methods = options.methods || {}
+
                 const data = reactive(options.data())
+                Object.keys(methods).forEach(key=>{
+                    data[key] = methods[key].bind(data)
+                })
                  el.addEventListener('click', (e) => {
                         if (e.target.tagName === 'BUTTON') {
-                            data.count += 1
+                            data.add()
                             }
                     })
                 effect(()=>{
@@ -47,13 +48,15 @@
     }
     const app = createApp({
         data(){
-            return {count:0}
+            return {count:0,name:'zahngsan'}
         },
         template(data){
-            return`<div > ${data.count}</div>
+            return`<div > ${data.count}:${data.name}</div>
             <button>+1</button>`
-        },method(){
-            add()
+        },methods:{
+            add() {
+                this.count+=2
+            }
         }
     })
     app.mount('#app')

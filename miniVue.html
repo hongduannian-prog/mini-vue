@@ -1,8 +1,31 @@
-<body>
-<div id="app"></div>
 <script>
 
-    function reactive(target){
+    function computed(getter){
+        let _dirty = true
+        let _value     
+      
+          effect(()=>{
+                _dirty = true
+                getter()
+            }) 
+        return{
+            
+            get value(){
+                  if(_dirty){
+            
+                    _dirty = false
+                    _value = getter()
+                     _dirty = false
+                    
+                }  
+                return _value   
+              
+            }
+           
+        }
+
+    }
+        function reactive(target){
         const deps = {}
         const handler ={
             get(target,key){
@@ -25,48 +48,16 @@
         fn()
         activeFn = null
     }
-    function createApp(options){
-        return{
-            mount(selector){
-                const el = document.querySelector(selector)
-                const methods = options.methods || {}
 
-                const data = reactive(options.data())
-                Object.keys(methods).forEach(key=>{
-                    data[key] = methods[key].bind(data)
-                })
-                 el.addEventListener('click', (e) => {
-                        if (e.target.tagName === 'BUTTON') {
-                            data.add()
-                            }
-                    })
-                effect(()=>{
-                    el.innerHTML = options.template(data)
-                })
-            }
-        }
-    }
-    const app = createApp({
-        data(){
-            return {count:0,name:'zahngsan'}
-        },
-        template(data){
-            return`<div > ${data.count}:${data.name}</div>
-            <button>+1</button>`
-        },methods:{
-            add() {
-                this.count+=2
-            }
-        }
-    })
-    app.mount('#app')
-  const state = reactive({ count: 0 })
+const state = reactive({ count: 0 })
+const double = computed(() => state.count * 2)
 
-// effect(() => {
-//   console.log('count是:', state.count)
-// })
-
+console.log(double.value)  // 0
 state.count = 1
-state.count = 2
-</script>
-</body>
+console.log(double.value)  // 2
+
+console.log(double.value)  // 应该还是2，不会重新计算
+console.log(double.value)  // 还是2
+state.count = 3
+console.log(double.value)  // 6
+</script>          

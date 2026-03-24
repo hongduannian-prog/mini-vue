@@ -1,0 +1,130 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div class="box">hello</div>
+    <script>
+
+        // DIFF算法
+        function patch(n1,n2){
+            const el = n2.el = n1.el
+            if(typeof n2.children==='string'){
+                if (n1.children != n2.children){
+                    el.textContent = n2.children
+                } 
+            }
+        }
+    //    {tag:'div',props:{class:'box'},children:'hello'}
+        function h(tag,props,children){
+            return{tag,props,children}
+        }
+        console.log(h('div', { class: 'box' }, 'hello')) 
+        
+        // 虚拟DOM
+        function mount(vnode,container){
+
+
+            const el = document.createElement(vnode.tag)
+            vnode.el  = el
+            //如何将props的属性设置到el上
+            Object.keys(vnode.props).forEach(key=>{
+                el.setAttribute(key,vnode.props[key])
+            })
+            if(typeof vnode.children === 'string'){
+                el.textContent = vnode.children
+            }else{
+                vnode.children.forEach(child=>{
+                    mount(child,el)
+                })
+            }
+            container.appendChild(el)
+
+
+        }
+            // ?const vnode = h('div', { class: 'box' }, 'hello')
+            // mount(vnode, document.body)
+
+   const vnode = h('div', { class: 'box' }, [
+            h('p', {}, 'hello'),
+            h('span', {}, 'world')
+            ])
+            mount(vnode, document.body)
+        
+
+        // 组件化
+        function computed(getter){
+        let _dirty = true
+        let _value     
+      
+        effect(()=>{
+             _dirty = true
+            getter()
+        }) 
+        return{
+            
+            get value(){
+                  if(_dirty){
+            
+                    _dirty = false
+                    _value = getter()
+                     _dirty = false
+                    
+                }  
+                return _value   
+              
+            }
+           
+        }
+
+    }
+        function reactive(target){
+        const deps = {}
+        const handler ={
+            get(target,key){
+                if(activeFn)deps[key]=activeFn
+                return target[key]
+            },
+            set(target,key,value){
+                target[key]=value
+                if(deps[key])deps[key]()
+                return true
+            }
+
+        }
+        const proxy = new Proxy(target,handler)
+        return proxy
+    }
+    let activeFn = null
+    function effect(fn){
+        activeFn=fn 
+        fn()
+        activeFn = null
+    }
+
+const state = reactive({ count: 0 })
+const double = computed(() => state.count * 2)
+
+console.log(double.value)  // 0
+state.count = 1
+console.log(double.value)  // 2
+
+console.log(double.value)  // 应该还是2，不会重新计算
+console.log(double.value)  // 还是2
+state.count = 3
+console.log(double.value)  // 6
+        const vnode1 = h('div', { class: 'box' }, 'hello')
+            mount(vnode1, document.body)
+
+        const vnode2 = h('div', { class: 'box' }, 'world')
+        patch(vnode1, vnode2)
+
+
+
+</script>   
+</body>
+</html>       
